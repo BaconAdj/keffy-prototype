@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getUserConversations } from '@/lib/db-conversations';
@@ -16,7 +18,7 @@ export async function GET() {
       conversations
     });
   } catch (error: any) {
-    console.error('Error in GET /api/conversations/list:', error);
+    console.error('Error in GET /conversations/list:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }
