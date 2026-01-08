@@ -1,0 +1,80 @@
+import { supabaseAdmin } from './supabase';
+import { UserPreferences, TravelStyle } from './database.types';
+
+export async function getUserPreferences(
+  userId: string
+): Promise<UserPreferences | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return await createUserPreferences(userId);
+      }
+      console.error('Error fetching user preferences:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getUserPreferences:', error);
+    return null;
+  }
+}
+
+export async function createUserPreferences(
+  userId: string
+): Promise<UserPreferences | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('user_preferences')
+      .insert({
+        user_id: userId,
+        home_city: null,
+        travel_style: null,
+        dietary_restrictions: null,
+        preferred_airlines: null,
+        notes: null
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating user preferences:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in createUserPreferences:', error);
+    return null;
+  }
+}
+
+export async function updateUserPreferences(
+  userId: string,
+  updates: Partial<Omit<UserPreferences, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+): Promise<UserPreferences | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('user_preferences')
+      .update(updates)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating user preferences:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in updateUserPreferences:', error);
+    return null;
+  }
+}

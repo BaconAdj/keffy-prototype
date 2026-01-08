@@ -1,0 +1,223 @@
+// Major cities with commercial airports worldwide
+// Format: "City, Country" for consistency
+export const AIRPORT_CITIES = [
+  // NORTH AMERICA - Canada
+  'Toronto, Canada', 'Vancouver, Canada', 'Montreal, Canada', 'Calgary, Canada',
+  'Edmonton, Canada', 'Ottawa, Canada', 'Winnipeg, Canada', 'Quebec City, Canada',
+  'Halifax, Canada', 'Victoria, Canada', 'Kelowna, Canada', 'Saskatoon, Canada',
+  'Regina, Canada', 'St. Johns, Canada', 'Thunder Bay, Canada', 'Moncton, Canada',
+  'Charlottetown, Canada', 'Whitehorse, Canada', 'Yellowknife, Canada',
+  'Hamilton, Canada', 'London, Canada', 'Windsor, Canada', 'Abbotsford, Canada',
+  
+  // NORTH AMERICA - USA
+  'New York City, USA', 'Los Angeles, USA', 'Chicago, USA', 'Houston, USA',
+  'Phoenix, USA', 'Philadelphia, USA', 'San Antonio, USA', 'San Diego, USA',
+  'Dallas, USA', 'San Jose, USA', 'Austin, USA', 'Jacksonville, USA',
+  'Fort Worth, USA', 'Columbus, USA', 'San Francisco, USA', 'Charlotte, USA',
+  'Indianapolis, USA', 'Seattle, USA', 'Denver, USA', 'Washington DC, USA',
+  'Boston, USA', 'El Paso, USA', 'Detroit, USA', 'Nashville, USA',
+  'Portland, USA', 'Memphis, USA', 'Oklahoma City, USA', 'Las Vegas, USA',
+  'Louisville, USA', 'Baltimore, USA', 'Milwaukee, USA', 'Albuquerque, USA',
+  'Tucson, USA', 'Fresno, USA', 'Sacramento, USA', 'Kansas City, USA',
+  'Mesa, USA', 'Atlanta, USA', 'Omaha, USA', 'Colorado Springs, USA',
+  'Raleigh, USA', 'Miami, USA', 'Cleveland, USA', 'Tulsa, USA',
+  'Oakland, USA', 'Minneapolis, USA', 'Wichita, USA', 'New Orleans, USA',
+  'Arlington, USA', 'Bakersfield, USA', 'Tampa, USA', 'Honolulu, USA',
+  'Anchorage, USA', 'Orlando, USA', 'Salt Lake City, USA', 'Pittsburgh, USA',
+  'Cincinnati, USA', 'Reno, USA', 'Buffalo, USA', 'Rochester, USA',
+  'Boise, USA', 'Spokane, USA', 'Des Moines, USA', 'Madison, USA',
+  
+  // NORTH AMERICA - Mexico & Central America
+  'Mexico City, Mexico', 'Guadalajara, Mexico', 'Monterrey, Mexico', 'Cancun, Mexico',
+  'Tijuana, Mexico', 'Puerto Vallarta, Mexico', 'Los Cabos, Mexico', 'Merida, Mexico',
+  'Guatemala City, Guatemala', 'San Jose, Costa Rica', 'Panama City, Panama',
+  'San Salvador, El Salvador', 'Managua, Nicaragua', 'Tegucigalpa, Honduras',
+  'Belize City, Belize',
+  
+  // SOUTH AMERICA
+  'Buenos Aires, Argentina', 'Sao Paulo, Brazil', 'Rio de Janeiro, Brazil',
+  'Lima, Peru', 'Bogota, Colombia', 'Santiago, Chile', 'Caracas, Venezuela',
+  'Quito, Ecuador', 'Montevideo, Uruguay', 'La Paz, Bolivia', 'Asuncion, Paraguay',
+  'Brasilia, Brazil', 'Medellin, Colombia', 'Cartagena, Colombia', 'Cusco, Peru',
+  'Guayaquil, Ecuador', 'Valparaiso, Chile', 'Belo Horizonte, Brazil',
+  'Recife, Brazil', 'Salvador, Brazil', 'Fortaleza, Brazil', 'Manaus, Brazil',
+  
+  // CARIBBEAN
+  'Havana, Cuba', 'Kingston, Jamaica', 'Santo Domingo, Dominican Republic',
+  'San Juan, Puerto Rico', 'Nassau, Bahamas', 'Bridgetown, Barbados',
+  'Port of Spain, Trinidad and Tobago', 'Montego Bay, Jamaica', 'Punta Cana, Dominican Republic',
+  'Aruba, Aruba', 'Curacao, Curacao', 'Grand Cayman, Cayman Islands',
+  
+  // EUROPE - UK & Ireland
+  'London, UK', 'Manchester, UK', 'Birmingham, UK', 'Glasgow, UK',
+  'Edinburgh, UK', 'Liverpool, UK', 'Bristol, UK', 'Belfast, UK',
+  'Dublin, Ireland', 'Cork, Ireland', 'Shannon, Ireland',
+  
+  // EUROPE - Western Europe
+  'Paris, France', 'Lyon, France', 'Marseille, France', 'Nice, France',
+  'Toulouse, France', 'Bordeaux, France', 'Nantes, France', 'Strasbourg, France',
+  'Amsterdam, Netherlands', 'Rotterdam, Netherlands', 'Brussels, Belgium',
+  'Antwerp, Belgium', 'Luxembourg City, Luxembourg',
+  
+  // EUROPE - Germany
+  'Berlin, Germany', 'Munich, Germany', 'Frankfurt, Germany', 'Hamburg, Germany',
+  'Cologne, Germany', 'Stuttgart, Germany', 'Dusseldorf, Germany', 'Dortmund, Germany',
+  'Nuremberg, Germany', 'Dresden, Germany', 'Leipzig, Germany', 'Hanover, Germany',
+  
+  // EUROPE - Spain & Portugal
+  'Madrid, Spain', 'Barcelona, Spain', 'Valencia, Spain', 'Seville, Spain',
+  'Malaga, Spain', 'Bilbao, Spain', 'Palma de Mallorca, Spain', 'Alicante, Spain',
+  'Granada, Spain', 'Lisbon, Portugal', 'Porto, Portugal', 'Faro, Portugal',
+  
+  // EUROPE - Italy
+  'Rome, Italy', 'Milan, Italy', 'Venice, Italy', 'Florence, Italy',
+  'Naples, Italy', 'Turin, Italy', 'Bologna, Italy', 'Palermo, Italy',
+  'Genoa, Italy', 'Verona, Italy', 'Catania, Italy', 'Pisa, Italy',
+  
+  // EUROPE - Scandinavia
+  'Stockholm, Sweden', 'Gothenburg, Sweden', 'Copenhagen, Denmark',
+  'Oslo, Norway', 'Bergen, Norway', 'Helsinki, Finland', 'Reykjavik, Iceland',
+  
+  // EUROPE - Eastern Europe
+  'Vienna, Austria', 'Prague, Czech Republic', 'Budapest, Hungary',
+  'Warsaw, Poland', 'Krakow, Poland', 'Bucharest, Romania', 'Sofia, Bulgaria',
+  'Belgrade, Serbia', 'Zagreb, Croatia', 'Ljubljana, Slovenia',
+  'Bratislava, Slovakia', 'Vilnius, Lithuania', 'Riga, Latvia', 'Tallinn, Estonia',
+  
+  // EUROPE - Greece & Balkans
+  'Athens, Greece', 'Thessaloniki, Greece', 'Heraklion, Greece', 'Rhodes, Greece',
+  'Santorini, Greece', 'Mykonos, Greece', 'Dubrovnik, Croatia', 'Split, Croatia',
+  
+  // EUROPE - Switzerland & Austria
+  'Zurich, Switzerland', 'Geneva, Switzerland', 'Basel, Switzerland',
+  'Bern, Switzerland', 'Salzburg, Austria', 'Innsbruck, Austria',
+  
+  // MIDDLE EAST
+  'Dubai, UAE', 'Abu Dhabi, UAE', 'Doha, Qatar', 'Riyadh, Saudi Arabia',
+  'Jeddah, Saudi Arabia', 'Kuwait City, Kuwait', 'Manama, Bahrain',
+  'Muscat, Oman', 'Amman, Jordan', 'Beirut, Lebanon', 'Tel Aviv, Israel',
+  'Jerusalem, Israel', 'Cairo, Egypt', 'Alexandria, Egypt', 'Istanbul, Turkey',
+  'Ankara, Turkey', 'Antalya, Turkey', 'Izmir, Turkey',
+  
+  // ASIA - East Asia
+  'Tokyo, Japan', 'Osaka, Japan', 'Kyoto, Japan', 'Nagoya, Japan',
+  'Sapporo, Japan', 'Fukuoka, Japan', 'Okinawa, Japan',
+  'Seoul, South Korea', 'Busan, South Korea', 'Jeju, South Korea',
+  'Beijing, China', 'Shanghai, China', 'Guangzhou, China', 'Shenzhen, China',
+  'Chengdu, China', 'Hangzhou, China', 'Xian, China', 'Hong Kong, China',
+  'Taipei, Taiwan', 'Kaohsiung, Taiwan',
+  
+  // ASIA - Southeast Asia
+  'Singapore, Singapore', 'Bangkok, Thailand', 'Phuket, Thailand',
+  'Chiang Mai, Thailand', 'Kuala Lumpur, Malaysia', 'Penang, Malaysia',
+  'Manila, Philippines', 'Cebu, Philippines', 'Jakarta, Indonesia',
+  'Bali, Indonesia', 'Ho Chi Minh City, Vietnam', 'Hanoi, Vietnam',
+  'Phnom Penh, Cambodia', 'Siem Reap, Cambodia', 'Vientiane, Laos',
+  'Yangon, Myanmar', 'Mandalay, Myanmar', 'Brunei, Brunei',
+  
+  // ASIA - South Asia
+  'Mumbai, India', 'Delhi, India', 'Bangalore, India', 'Chennai, India',
+  'Kolkata, India', 'Hyderabad, India', 'Ahmedabad, India', 'Pune, India',
+  'Jaipur, India', 'Goa, India', 'Kochi, India', 'Varanasi, India',
+  'Islamabad, Pakistan', 'Karachi, Pakistan', 'Lahore, Pakistan',
+  'Dhaka, Bangladesh', 'Colombo, Sri Lanka', 'Kathmandu, Nepal',
+  'Thimphu, Bhutan', 'Male, Maldives',
+  
+  // ASIA - Central Asia
+  'Almaty, Kazakhstan', 'Tashkent, Uzbekistan', 'Bishkek, Kyrgyzstan',
+  'Dushanbe, Tajikistan', 'Ashgabat, Turkmenistan',
+  
+  // AFRICA - North Africa
+  'Casablanca, Morocco', 'Marrakech, Morocco', 'Rabat, Morocco', 'Fez, Morocco',
+  'Tunis, Tunisia', 'Algiers, Algeria', 'Tripoli, Libya',
+  
+  // AFRICA - Sub-Saharan Africa
+  'Johannesburg, South Africa', 'Cape Town, South Africa', 'Durban, South Africa',
+  'Nairobi, Kenya', 'Lagos, Nigeria', 'Accra, Ghana', 'Addis Ababa, Ethiopia',
+  'Dar es Salaam, Tanzania', 'Kampala, Uganda', 'Kigali, Rwanda',
+  'Lusaka, Zambia', 'Harare, Zimbabwe', 'Windhoek, Namibia',
+  'Gaborone, Botswana', 'Maputo, Mozambique', 'Dakar, Senegal',
+  'Abidjan, Ivory Coast', 'Kinshasa, Democratic Republic of Congo',
+  
+  // OCEANIA
+  'Sydney, Australia', 'Melbourne, Australia', 'Brisbane, Australia',
+  'Perth, Australia', 'Adelaide, Australia', 'Gold Coast, Australia',
+  'Canberra, Australia', 'Hobart, Australia', 'Darwin, Australia',
+  'Cairns, Australia', 'Auckland, New Zealand', 'Wellington, New Zealand',
+  'Christchurch, New Zealand', 'Queenstown, New Zealand',
+  'Fiji, Fiji', 'Port Moresby, Papua New Guinea', 'Noumea, New Caledonia',
+  'Papeete, French Polynesia', 'Guam, Guam',
+  
+  // RUSSIA & NEIGHBORS
+  'Moscow, Russia', 'St Petersburg, Russia', 'Vladivostok, Russia',
+  'Yekaterinburg, Russia', 'Novosibirsk, Russia', 'Sochi, Russia',
+  'Kazan, Russia', 'Kiev, Ukraine', 'Odessa, Ukraine', 'Tbilisi, Georgia',
+  'Yerevan, Armenia', 'Baku, Azerbaijan', 'Minsk, Belarus',
+].sort();
+
+export const DIETARY_SUGGESTIONS = [
+  'Vegetarian',
+  'Vegan', 
+  'Pescatarian',
+  'Gluten-free',
+  'Dairy-free',
+  'Nut allergy',
+  'Shellfish allergy',
+  'Egg allergy',
+  'Soy allergy',
+  'Kosher',
+  'Halal',
+  'Lactose intolerant',
+  'Low-carb',
+  'Keto',
+].sort();
+
+export const AIRLINE_SUGGESTIONS = [
+  // Airline Alliances (at top for visibility)
+  'All Star Alliance Members',
+  'All Oneworld Members', 
+  'All SkyTeam Members',
+  
+  // North America
+  'Air Canada', 'WestJet', 'Porter Airlines', 'Air Transat', 'Flair Airlines',
+  'United Airlines', 'American Airlines', 'Delta Air Lines', 'Southwest Airlines',
+  'JetBlue', 'Alaska Airlines', 'Spirit Airlines', 'Frontier Airlines',
+  'Allegiant Air', 'Hawaiian Airlines', 'Sun Country Airlines',
+  
+  // Latin America
+  'Aeromexico', 'Copa Airlines', 'Avianca', 'LATAM Airlines', 'Azul Brazilian Airlines',
+  'Gol Airlines', 'Volaris', 'Interjet', 'Viva Aerobus',
+  
+  // Europe - Major
+  'British Airways', 'Air France', 'Lufthansa', 'KLM', 'Swiss International Air Lines',
+  'Iberia', 'Alitalia', 'Austrian Airlines', 'Brussels Airlines', 'TAP Air Portugal',
+  'Scandinavian Airlines', 'Finnair', 'Aer Lingus', 'Icelandair',
+  
+  // Europe - Low Cost
+  'Ryanair', 'easyJet', 'Wizz Air', 'Vueling', 'Norwegian Air',
+  'Eurowings', 'Transavia', 'Pegasus Airlines',
+  
+  // Middle East
+  'Emirates', 'Qatar Airways', 'Etihad Airways', 'Turkish Airlines',
+  'Saudia', 'Gulf Air', 'Oman Air', 'Royal Jordanian', 'El Al',
+  
+  // Asia-Pacific - Major
+  'Singapore Airlines', 'Cathay Pacific', 'ANA', 'Japan Airlines',
+  'Korean Air', 'Asiana Airlines', 'EVA Air', 'China Airlines',
+  'Air China', 'China Eastern', 'China Southern', 'Hainan Airlines',
+  
+  // Asia-Pacific - Regional
+  'Thai Airways', 'Malaysia Airlines', 'Garuda Indonesia', 'Philippine Airlines',
+  'Vietnam Airlines', 'Air India', 'IndiGo', 'SpiceJet',
+  'AirAsia', 'Jetstar', 'Scoot', 'Cebu Pacific',
+  
+  // Oceania
+  'Qantas', 'Air New Zealand', 'Virgin Australia', 'Fiji Airways',
+  
+  // Africa
+  'South African Airways', 'Ethiopian Airlines', 'Kenya Airways', 'EgyptAir',
+  'Royal Air Maroc', 'Tunisair',
+  
+  // Cargo/Charter (if user needs)
+  'FedEx', 'UPS Airlines', 'DHL Aviation',
+].sort();

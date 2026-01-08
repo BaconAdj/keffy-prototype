@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useUser, UserButton } from '@clerk/nextjs';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -8,15 +11,35 @@ type Message = {
 };
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Hi there! I'm Keffy, your travel concierge. I'd love to help you plan something special. What are you thinking about for your next trip?"
-    }
-  ]);
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get('id');
+  
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load existing conversation if ID provided
+  useEffect(() => {
+    if (isLoaded && user && conversationId) {
+      loadConversation(conversationId);
+    }
+  }, [isLoaded, user, conversationId]);
+
+  // Initialize with greeting for new conversation
+  useEffect(() => {
+    if (isLoaded && user && messages.length === 0 && !conversationId) {
+      const greeting = user.firstName 
+        ? `Hi ${user.firstName}! I'm Keffy, your travel concierge. I'd love to help you plan something special. What are you thinking about for your next trip?`
+        : "Hi there! I'm Keffy, your travel concierge. I'd love to help you plan something special. What are you thinking about for your next trip?";
+      
+      setMessages([{ role: 'assistant', content: greeting }]);
+    }
+  }, [isLoaded, user, conversationId]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -24,6 +47,65 @@ export default function Home() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const loadConversation = async (id: string) => {
+    try {
+      const response = await fetch(`/api/conversations/${id}`);
+      if (!response.ok) throw new Error('Failed to load conversation');
+      
+      const data = await response.json();
+      setMessages(data.messages);
+      setCurrentConversationId(id);
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+    }
+  };
+
+  const saveConversation = async (conversationMessages: Message[]) => {
+    if (!user || isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      // If no conversation ID, create new conversation
+      if (!currentConversationId) {
+        const firstUserMessage = conversationMessages.find(m => m.role === 'user');
+        if (!firstUserMessage) return;
+
+        const response = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            firstMessage: firstUserMessage.content,
+            messages: conversationMessages
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to create conversation');
+        
+        const data = await response.json();
+        setCurrentConversationId(data.conversationId);
+        
+        // Update URL without page reload
+        window.history.pushState({}, '', `/?id=${data.conversationId}`);
+      } else {
+        // Add new messages to existing conversation
+        const lastTwoMessages = conversationMessages.slice(-2);
+        
+        const response = await fetch(`/api/conversations/${currentConversationId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: lastTwoMessages }),
+        });
+
+        if (!response.ok) throw new Error('Failed to save messages');
+      }
+    } catch (error) {
+      console.error('Error saving conversation:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -47,10 +129,16 @@ export default function Home() {
 
       const data = await response.json();
       
-      setMessages([...newMessages, { 
-        role: 'assistant', 
+      const updatedMessages = [...newMessages, { 
+        role: 'assistant' as const, 
         content: data.message 
-      }]);
+      }];
+      
+      setMessages(updatedMessages);
+      
+      // Save conversation to database
+      await saveConversation(updatedMessages);
+      
     } catch (error) {
       console.error('Error:', error);
       setMessages([...newMessages, { 
@@ -62,6 +150,21 @@ export default function Home() {
     }
   };
 
+  const startNewConversation = () => {
+    setMessages([]);
+    setCurrentConversationId(null);
+    window.history.pushState({}, '', '/');
+    
+    // Re-initialize with greeting
+    if (user) {
+      const greeting = user.firstName 
+        ? `Hi ${user.firstName}! I'm Keffy, your travel concierge. I'd love to help you plan something special. What are you thinking about for your next trip?`
+        : "Hi there! I'm Keffy, your travel concierge. I'd love to help you plan something special. What are you thinking about for your next trip?";
+      
+      setMessages([{ role: 'assistant', content: greeting }]);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -69,11 +172,53 @@ export default function Home() {
     }
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <div className="text-navy">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 p-5">
       {/* Phone Frame */}
-      <div className="w-full max-w-[400px] h-[90vh] max-h-[844px] bg-sand rounded-[40px] shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-full max-w-[400px] h-[90vh] max-h-[844px] bg-sand rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative">
         
+        {/* Header with User Profile */}
+        <div className="absolute top-0 left-0 right-0 z-10 bg-sand/95 backdrop-blur-sm border-b border-border/30 px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="font-vibes text-gold text-2xl">Keffy</div>
+            {currentConversationId && (
+              <button
+                onClick={startNewConversation}
+                className="text-xs px-3 py-1.5 bg-gold/10 text-gold rounded-full hover:bg-gold/20 transition-colors"
+              >
+                New Chat
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Link 
+              href="/history"
+              className="text-navy hover:text-gold transition-colors"
+              title="Conversation History"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </Link>
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "w-9 h-9"
+                }
+              }}
+            />
+          </div>
+        </div>
+
         {/* Chat Messages */}
         <div 
           ref={chatContainerRef}
@@ -109,6 +254,12 @@ export default function Home() {
               </div>
             </div>
           )}
+          
+          {isSaving && (
+            <div className="text-center text-xs text-gray-400 mb-2">
+              Saving...
+            </div>
+          )}
         </div>
 
         {/* Input Area */}
@@ -137,24 +288,24 @@ export default function Home() {
 
         {/* Bottom Navigation */}
         <div className="px-5 py-2 pb-5 bg-sand/98 backdrop-blur-sm border-t border-border/40 flex justify-around items-center">
-          <div className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gold">
+          <Link href="/" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gold">
             <div className="font-vibes text-[2rem] leading-none -mt-1">K</div>
             <span className="text-[11px] font-medium">Keffy</span>
-          </div>
+          </Link>
           
-          <div className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 cursor-not-allowed">
+          <Link href="/bookings" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 hover:bg-border/30 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
             <span className="text-[11px] font-medium">Bookings</span>
-          </div>
+          </Link>
           
-          <div className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 cursor-not-allowed">
+          <Link href="/account" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 hover:bg-border/30 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span className="text-[11px] font-medium">Account</span>
-          </div>
+          </Link>
         </div>
       </div>
     </div>
