@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { getSupabaseAdmin } from './supabase';
 import { UserPreferences, TravelStyle } from './database.types';
 
 // =============================================
@@ -12,7 +12,7 @@ export async function getUserPreferences(
   userId: string
 ): Promise<UserPreferences | null> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('user_preferences')
       .select('*')
       .eq('user_id', userId)
@@ -46,7 +46,7 @@ export async function createUserPreferences(
   userId: string
 ): Promise<UserPreferences | null> {
   try {
-    const { data, error} = await supabaseAdmin
+    const { data, error} = await getSupabaseAdmin()
       .from('user_preferences')
       .insert({
         user_id: userId,
@@ -86,7 +86,7 @@ export async function updateUserPreferences(
       }
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('user_preferences')
       .update(updates)
       .eq('user_id', userId)

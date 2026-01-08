@@ -1,9 +1,9 @@
-import { supabaseAdmin } from './supabase';
+import { getSupabaseAdmin } from './supabase';
 import { Conversation, Message, ConversationSummary } from './database.types';
 
 // =============================================
 // CONVERSATION OPERATIONS
-// Using supabaseAdmin (service role) to bypass RLS
+// Using getSupabaseAdmin() (service role) to bypass RLS
 // since these operations happen server-side with Clerk auth
 // =============================================
 
@@ -21,7 +21,7 @@ export async function createConversation(
       ? firstMessage.substring(0, 50) + '...' 
       : firstMessage;
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('conversations')
       .insert({
         user_id: userId,
@@ -50,7 +50,7 @@ export async function getUserConversations(
   userId: string
 ): Promise<ConversationSummary[]> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('conversation_summary')
       .select('*')
       .eq('user_id', userId)
@@ -77,7 +77,7 @@ export async function getConversation(
   conversationId: string
 ): Promise<Conversation | null> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('conversations')
       .select('*')
       .eq('id', conversationId)
@@ -103,7 +103,7 @@ export async function updateConversation(
   updates: Partial<Pick<Conversation, 'title' | 'status'>>
 ): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('conversations')
       .update(updates)
       .eq('id', conversationId);
@@ -127,7 +127,7 @@ export async function deleteConversation(
   conversationId: string
 ): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('conversations')
       .delete()
       .eq('id', conversationId);
@@ -157,7 +157,7 @@ export async function addMessage(
   content: string
 ): Promise<Message | null> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('messages')
       .insert({
         conversation_id: conversationId,
@@ -186,7 +186,7 @@ export async function getMessages(
   conversationId: string
 ): Promise<Message[]> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -218,7 +218,7 @@ export async function addMessages(
       content: msg.content
     }));
 
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('messages')
       .insert(messagesToInsert);
 
