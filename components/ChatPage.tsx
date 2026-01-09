@@ -23,8 +23,8 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
     
     const linkText = match[1];
     const url = match[2];
-    const anchorTag = (
-      
+    parts.push(
+      <a
         key={match.index}
         href={url}
         target="_blank"
@@ -34,7 +34,6 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
         {linkText}
       </a>
     );
-    parts.push(anchorTag);
     
     lastIndex = match.index + match[0].length;
   }
