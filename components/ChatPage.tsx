@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useUser, UserButton } from '@clerk/nextjs';
+import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -11,7 +11,7 @@ type Message = {
 };
 
 export default function ChatPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const conversationId = searchParams.get('id');
@@ -176,6 +176,24 @@ export default function ChatPage() {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="text-navy">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show sign-in prompt for logged-out users
+  if (!isSignedIn) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50 p-5">
+        <div className="w-full max-w-[400px] bg-sand rounded-[40px] shadow-2xl p-8 text-center">
+          <div className="font-vibes text-gold text-4xl mb-4">Keffy</div>
+          <p className="text-navy text-lg mb-6">Your personal travel concierge</p>
+          <p className="text-gray-600 mb-8">Sign in to start planning your next adventure</p>
+          <SignInButton mode="modal">
+            <button className="w-full bg-gold text-white py-3 px-6 rounded-full hover:bg-[#b89451] transition-colors font-medium">
+              Sign In
+            </button>
+          </SignInButton>
+        </div>
       </div>
     );
   }
