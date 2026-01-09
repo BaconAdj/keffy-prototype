@@ -10,6 +10,48 @@ type Message = {
   content: string;
 };
 
+// Simple markdown link parser
+function parseMarkdownLinks(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  // Match markdown links: [text](url)
+  const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
+  let match;
+  
+  while ((match = linkRegex.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    
+    // Add the link
+    const linkText = match[1];
+    const url = match[2];
+    parts.push(
+      
+        key={match.index}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-gold underline hover:text-[#b89451] font-semibold break-words"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {linkText}
+      </a>
+    );
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : [text];
+}
+
 export default function ChatPage() {
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
@@ -66,7 +108,6 @@ export default function ChatPage() {
     
     setIsSaving(true);
     try {
-      // If no conversation ID, create new conversation
       if (!currentConversationId) {
         const firstUserMessage = conversationMessages.find(m => m.role === 'user');
         if (!firstUserMessage) return;
@@ -85,11 +126,8 @@ export default function ChatPage() {
         
         const data = await response.json();
         setCurrentConversationId(data.conversationId);
-        
-        // Update URL without page reload
         window.history.pushState({}, '', `/?id=${data.conversationId}`);
       } else {
-        // Add new messages to existing conversation
         const lastTwoMessages = conversationMessages.slice(-2);
         
         const response = await fetch(`/api/conversations/${currentConversationId}/messages`, {
@@ -113,7 +151,6 @@ export default function ChatPage() {
     const userMessage = input.trim();
     setInput('');
     
-    // Add user message to chat
     const newMessages = [...messages, { role: 'user' as const, content: userMessage }];
     setMessages(newMessages);
     setIsLoading(true);
@@ -135,8 +172,6 @@ export default function ChatPage() {
       }];
       
       setMessages(updatedMessages);
-      
-      // Save conversation to database
       await saveConversation(updatedMessages);
       
     } catch (error) {
@@ -155,7 +190,6 @@ export default function ChatPage() {
     setCurrentConversationId(null);
     window.history.pushState({}, '', '/');
     
-    // Re-initialize with greeting
     if (user) {
       const greeting = user.firstName 
         ? `Hi ${user.firstName}! I'm Keffy, your travel concierge. I'd love to help you plan something special. What are you thinking about for your next trip?`
@@ -180,7 +214,6 @@ export default function ChatPage() {
     );
   }
 
-  // Show sign-in prompt for logged-out users
   if (!isSignedIn) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50 p-5">
@@ -200,10 +233,8 @@ export default function ChatPage() {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 p-5">
-      {/* Phone Frame */}
       <div className="w-full max-w-[400px] h-[90vh] max-h-[844px] bg-sand rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative">
         
-        {/* Header with User Profile */}
         <div className="absolute top-0 left-0 right-0 z-10 bg-sand/95 backdrop-blur-sm border-b border-border/30 px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="font-vibes text-gold text-2xl">Keffy</div>
@@ -237,7 +268,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Chat Messages */}
         <div 
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto px-5 pt-[60px] pb-5 chat-scroll"
@@ -250,13 +280,15 @@ export default function ChatPage() {
               }`}
             >
               <div
-                className={`max-w-[80%] px-[18px] py-[14px] rounded-[20px] leading-relaxed text-[15px] ${
+                className={`max-w-[80%] px-[18px] py-[14px] rounded-[20px] leading-relaxed text-[15px] break-words ${
                   message.role === 'assistant'
                     ? 'bg-navy text-white rounded-bl-[4px] shadow-md'
                     : 'bg-white text-navy border-[1.5px] border-border rounded-br-[4px] shadow-sm'
                 }`}
               >
-                {message.content}
+                <div className="whitespace-pre-wrap">
+                  {parseMarkdownLinks(message.content)}
+                </div>
               </div>
             </div>
           ))}
@@ -280,7 +312,6 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Input Area */}
         <div className="px-5 py-3 bg-sand/95 backdrop-blur-sm border-t border-border/30">
           <div className="flex gap-2.5 items-end">
             <textarea
@@ -304,7 +335,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Bottom Navigation */}
         <div className="px-5 py-2 pb-5 bg-sand/98 backdrop-blur-sm border-t border-border/40 flex justify-around items-center">
           <Link href="/" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gold">
             <div className="font-vibes text-[2rem] leading-none -mt-1">K</div>
