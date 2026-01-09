@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getUserPreferences } from '@/lib/db-preferences';
+import { extractTravelContext, generateHotelLink } from '@/lib/conversation-context';
 
 const KEFFY_SYSTEM_PROMPT = `You are Keffy, a personal travel concierge. You create trips that bring genuine happiness through warm, expert guidance.
 
@@ -49,32 +50,27 @@ Clients often don't know what things cost. They'll feel awkward or give unrealis
 
 ---
 
-## 🔗 BOOKING CAPABILITY
+## 🔗 BOOKING CAPABILITY - MAKING HOTEL NAMES CLICKABLE
 
-You can now help clients book their trips! When you recommend hotels or activities, include booking links.
+When recommending hotels, make each hotel name a clickable link using this format:
 
-### How to Provide Booking Links
+**[Hotel Name](BOOKING_LINK_Hotel Name)**
 
-**When recommending hotels:**
-After presenting 3 hotel options, say something like:
-"Ready to check availability and prices? [Search hotels on Booking.com](HOTEL_LINK)"
+Example:
+**[The Ritz-Carlton Tokyo](BOOKING_LINK_The Ritz-Carlton Tokyo)** - Stunning city views from the 45th floor, incredible spa...
 
-**When suggesting activities:**
-"Want to see what's available? [Browse activities on GetYourGuide](ACTIVITY_LINK)"
+**[Aman Tokyo](BOOKING_LINK_Aman Tokyo)** - Zen luxury in the heart of the city. Minimalist elegance...
 
-**When discussing flights:**
-"[Compare flight options on Skyscanner](FLIGHT_LINK)"
+**[Park Hyatt Tokyo](BOOKING_LINK_Park Hyatt Tokyo)** - Famous from Lost in Translation, amazing views...
 
-### Link Format
-Use markdown links: [Text](URL)
+### Important Rules:
+- The text inside BOOKING_LINK_ should be the exact hotel name
+- Make ALL hotel recommendations clickable
+- Don't add extra "search hotels" links - the hotel names ARE the links
+- Keep hotel names in bold with ** around them
 
-The system will automatically generate the proper URLs based on the destination and dates discussed.
-
-### Important Rules
-- Only provide booking links AFTER you've made specific recommendations
-- Don't lead with "here's a link" - lead with your recommendation, then offer the link
-- Make it feel helpful, not pushy
-- If they haven't given you dates yet, get dates first
+For activities, you can say:
+"Want to explore activities? [Browse tours on GetYourGuide](ACTIVITY_LINK)"
 
 ---
 
@@ -100,6 +96,9 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    // Extract travel context from conversation
+    const travelContext = extractTravelContext(messages);
 
     // Build system prompt with user preferences
     let systemPrompt = KEFFY_SYSTEM_PROMPT;
@@ -152,9 +151,8 @@ export async function POST(req: Request) {
     const content = response.content[0];
     let messageText = content.type === 'text' ? content.text : '';
 
-    // Post-process: Replace booking link placeholders
-    // This is a simple approach - later we can make it smarter
-    messageText = processBookingLinks(messageText);
+    // Post-process: Replace booking link placeholders with actual links
+    messageText = processBookingLinks(messageText, travelContext);
 
     return NextResponse.json({ message: messageText });
   } catch (error: any) {
@@ -171,18 +169,26 @@ export async function POST(req: Request) {
 }
 
 /**
- * Process and replace booking link placeholders
- * Later: Make this smarter by extracting destination/dates from context
+ * Process and replace booking link placeholders with actual affiliate links
  */
-function processBookingLinks(text: string): string {
-  // For now, just replace with generic links
-  // TODO: Extract destination and dates from conversation context
-  const bookingId = process.env.NEXT_PUBLIC_BOOKING_AFFILIATE_ID || '';
-  const gygId = process.env.NEXT_PUBLIC_GETYOURGUIDE_PARTNER_ID || '';
+function processBookingLinks(text: string, context: any): string {
+  const bookingId = process.env.NEXT_PUBLIC_BOOKING_AFFILIATE_ID || '2721550';
+  const gygId = process.env.NEXT_PUBLIC_GETYOURGUIDE_PARTNER_ID || 'HXFQEGA';
   
-  text = text.replace(/HOTEL_LINK/g, `https://www.booking.com/index.html?aid=${bookingId}`);
-  text = text.replace(/ACTIVITY_LINK/g, `https://www.getyourguide.com/?partner_id=${gygId}`);
-  text = text.replace(/FLIGHT_LINK/g, 'https://www.skyscanner.com/');
+  // Replace hotel-specific links: BOOKING_LINK_Hotel Name
+  const hotelLinkPattern = /BOOKING_LINK_([^\)]+)/g;
+  text = text.replace(hotelLinkPattern, (match, hotelName) => {
+    const link = generateHotelLink(hotelName.trim(), context, bookingId);
+    return link;
+  });
+  
+  // Replace generic activity link
+  if (context.destination) {
+    const activityLink = `https://www.getyourguide.com/s/?q=${encodeURIComponent(context.destination)}&partner_id=${gygId}`;
+    text = text.replace(/ACTIVITY_LINK/g, activityLink);
+  } else {
+    text = text.replace(/ACTIVITY_LINK/g, `https://www.getyourguide.com/?partner_id=${gygId}`);
+  }
   
   return text;
 }
