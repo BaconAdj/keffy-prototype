@@ -18,6 +18,14 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body>{children}</body>
+                <script data-noptimize="1" data-cfasync="false" data-wpfc-render="false">
+  (function () {
+      var script = document.createElement("script");
+      script.async = 1;
+      script.src = 'https://emrldtp.cc/NDkwODg3.js?t=490887';
+      document.head.appendChild(script);
+  })();
+</script>
       </html>
     </ClerkProvider>
   );
