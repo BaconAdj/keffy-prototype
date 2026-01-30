@@ -39,55 +39,6 @@ When users mention "next month" or "this summer", calculate from today's date. A
 
 ---
 
-## 🚨 ABSOLUTE REQUIREMENT: FLIGHT LINK FORMAT
-
-**THIS IS NOT OPTIONAL. YOU MUST FOLLOW THIS EVERY SINGLE TIME.**
-
-When you mention flights, you MUST write it in this EXACT format:
-
-[Search flights for Feb 22 - Mar 1](FLIGHT_LINK_Montreal|Paris|2026-02-22|2026-03-01)
-
-**The pattern is:** FLIGHT_LINK_Origin|Destination|YYYY-MM-DD|YYYY-MM-DD
-
-**DO NOT write:** "Search flights for February 22-March 1"  
-**DO write:** [Search flights for Feb 22 - Mar 1](FLIGHT_LINK_Montreal|Paris|2026-02-22|2026-03-01)
-
-**CRITICAL: REQUIRED INFO BEFORE GENERATING FLIGHT LINK**
-
-You MUST collect ALL of the following BEFORE generating any flight link:
-
-1. ✅ Destination & travel dates
-2. ✅ Total number of travelers
-   - Ask: "How many people will be traveling?"
-3. ✅ Ages of ALL children under 11 years old
-   - Ask: "How old are your children? I need to know for accurate pricing."
-   - Age categories: Adults (11+), Children (2-11), Infants (under 2)
-4. ✅ Cabin class preference
-   - Ask: "Will this be in economy class, or would you prefer a more comfortable cabin class?"
-   - Options: Economy (default), Premium Economy, Business, First Class
-
-**ONLY after you have ALL this information should you generate the flight link.**
-
-**Trip Type Assumptions:**
-- Assume ROUNDTRIP unless user says "one-way" or "I'm not coming back"
-- Multi-city: User mentions multiple destinations (e.g., "Tokyo then Bangkok then home")
-
-**Example conversation:**
-User: "I want to go to Paris with my family next month"
-You: "Paris with your family sounds wonderful! When in February works for you?"
-User: "February 15th for a week"
-You: "Perfect, February 15-22. How many people will be traveling?"
-User: "Me, my wife, and our 2 kids"
-You: "Great! How old are your children? I need to know for accurate pricing."
-User: "They're 5 and 8"
-You: "Perfect! And for the flight - will this be in economy class, or would you prefer a more comfortable cabin class like premium economy, business, or first class?"
-User: "Economy is fine"
-You: "For Montreal to Paris February 15-22, flights in economy typically run $600-900 CAD per person. [Search flights for Feb 15 - Feb 22](FLIGHT_LINK_Montreal|Paris|2026-02-15|2026-02-22) to see current family options."
-
-**If you generate a flight link without collecting passenger count, children's ages, and cabin class, you have failed.**
-
----
-
 ## 🎯 PLANNING SEQUENCE - FLIGHTS FIRST
 
 **The conversation should follow this order:**
@@ -350,97 +301,9 @@ Create a conversation where they feel:
 }
 
 /**
- * Format location for Kiwi.com URLs
- * Canada/US: city-province-country (e.g., montreal-quebec-canada)
- * Other: city-country (e.g., porto-portugal, berlin-germany)
- */
-function formatKiwiLocation(location: string, country?: string): string {
-  const normalized = location.trim().toLowerCase().replace(/\s+/g, '-');
-  
-  // Common city mappings for proper Kiwi.com format
-  const locationMap: { [key: string]: string } = {
-    // Canada
-    'montreal': 'montreal-quebec-canada',
-    'toronto': 'toronto-ontario-canada',
-    'vancouver': 'vancouver-british-columbia-canada',
-    'calgary': 'calgary-alberta-canada',
-    'ottawa': 'ottawa-ontario-canada',
-    'quebec-city': 'quebec-city-quebec-canada',
-    'edmonton': 'edmonton-alberta-canada',
-    'winnipeg': 'winnipeg-manitoba-canada',
-    
-    // US
-    'new-york': 'new-york-new-york-united-states',
-    'los-angeles': 'los-angeles-california-united-states',
-    'chicago': 'chicago-illinois-united-states',
-    'miami': 'miami-florida-united-states',
-    'san-francisco': 'san-francisco-california-united-states',
-    'boston': 'boston-massachusetts-united-states',
-    'seattle': 'seattle-washington-united-states',
-    'las-vegas': 'las-vegas-nevada-united-states',
-    
-    // Europe
-    'paris': 'paris-france',
-    'london': 'london-united-kingdom',
-    'rome': 'rome-italy',
-    'barcelona': 'barcelona-spain',
-    'madrid': 'madrid-spain',
-    'lisbon': 'lisbon-portugal',
-    'porto': 'porto-portugal',
-    'amsterdam': 'amsterdam-netherlands',
-    'berlin': 'berlin-germany',
-    'frankfurt': 'frankfurt-germany',
-    'munich': 'munich-germany',
-    'vienna': 'vienna-austria',
-    'prague': 'prague-czech-republic',
-    'budapest': 'budapest-hungary',
-    'athens': 'athens-greece',
-    'dublin': 'dublin-ireland',
-    'brussels': 'brussels-belgium',
-    'copenhagen': 'copenhagen-denmark',
-    'stockholm': 'stockholm-sweden',
-    'oslo': 'oslo-norway',
-    
-    // Asia
-    'tokyo': 'tokyo-japan',
-    'seoul': 'seoul-south-korea',
-    'bangkok': 'bangkok-thailand',
-    'singapore': 'singapore-singapore',
-    'dubai': 'dubai-united-arab-emirates',
-    'istanbul': 'istanbul-turkey',
-    'hong-kong': 'hong-kong-hong-kong',
-    'beijing': 'beijing-china',
-    'shanghai': 'shanghai-china',
-    
-    // Oceania
-    'sydney': 'sydney-australia',
-    'melbourne': 'melbourne-australia',
-    'auckland': 'auckland-new-zealand',
-    
-    // Latin America
-    'mexico-city': 'mexico-city-mexico',
-    'cancun': 'cancun-mexico',
-    'buenos-aires': 'buenos-aires-argentina',
-    'rio-de-janeiro': 'rio-de-janeiro-brazil',
-    'sao-paulo': 'sao-paulo-brazil',
-    'santiago': 'santiago-chile',
-    'lima': 'lima-peru',
-    'quito': 'quito-ecuador',
-    'bogota': 'bogota-colombia',
-    'cartagena': 'cartagena-colombia',
-  };
-  
-  return locationMap[normalized] || normalized;
-}
-
-/**
  * Process and replace booking link placeholders with actual affiliate links
  */
 function processBookingLinks(text: string, context: any): string {
-  console.log('=== PROCESSING BOOKING LINKS ===');
-  console.log('Context:', JSON.stringify(context, null, 2));
-  console.log('Text to process:', text);
-  
   const bookingId = process.env.NEXT_PUBLIC_BOOKING_AFFILIATE_ID || '2721550';
   const gygId = process.env.NEXT_PUBLIC_GETYOURGUIDE_PARTNER_ID || 'HXFQEGA';
   
@@ -454,135 +317,18 @@ function processBookingLinks(text: string, context: any): string {
   // Replace flight links: FLIGHT_LINK_Origin|Destination|DepartureDate|ReturnDate
   const flightLinkPattern = /FLIGHT_LINK_([^|]+)\|([^|]+)\|([^|]*)\|([^\)]*)/g;
   text = text.replace(flightLinkPattern, (match, origin, dest, depDate, retDate) => {
-    // Kiwi.com uses query parameter format with full location names
-    const originSlug = formatKiwiLocation(origin);
-    const destSlug = formatKiwiLocation(dest);
+    // For now, generate Kiwi.com direct search link
+    // TODO: Wrap with Travelpayouts tracking later
+    const originSlug = origin.trim().toLowerCase().replace(/\s+/g, '-');
+    const destSlug = dest.trim().toLowerCase().replace(/\s+/g, '-');
+    const dates = depDate.trim() && retDate.trim() 
+      ? `?departure=${depDate.trim()}&return=${retDate.trim()}`
+      : depDate.trim() 
+        ? `?departure=${depDate.trim()}`
+        : '';
     
-    // Build query parameters
-    let url = `https://www.kiwi.com/en/?origin=${originSlug}&destination=${destSlug}`;
-    
-    if (depDate.trim()) {
-      url += `&outboundDate=${depDate.trim()}`;
-    }
-    
-    // Handle return date based on trip type
-    if (context.tripType === 'oneway') {
-      url += `&inboundDate=no-return`;
-    } else if (retDate.trim()) {
-      url += `&inboundDate=${retDate.trim()}`;
-    }
-    
-    // Add cabin class (only if not economy/null)
-    if (context.cabinClass && context.cabinClass !== 'ECONOMY') {
-      url += `&cabinClass=${context.cabinClass}-false`;
-    }
-    
-    // Add passenger counts (only if not default of 1 adult)
-    if (context.adults && context.adults !== 1) {
-      url += `&adults=${context.adults}`;
-    } else if (context.adults === 1 && (context.children > 0 || context.infants > 0)) {
-      url += `&adults=1`;
-    }
-    
-    if (context.children && context.children > 0) {
-      url += `&children=${context.children}`;
-    }
-    
-    if (context.infants && context.infants > 0) {
-      url += `&infants=${context.infants}`;
-    }
-    
-    return url;
+    return `https://www.kiwi.com/en/search/results/${originSlug}/${destSlug}${dates}`;
   });
-  
-  // SMART POST-PROCESSING: Convert plain text flight mentions to links
-  // This is the FALLBACK when AI doesn't use FLIGHT_LINK format
-  
-  if (context.origin && context.destination) {
-    console.log('Post-processing with context:', context.origin, '→', context.destination);
-    
-    // Pattern to detect plain text: "Search flights for Feb 5 - Feb 12"
-    // Use negative lookbehind to avoid double-wrapping
-    const plainTextPattern = /(?<!\[)Search flights for ([A-Za-z]+\s+\d+(?:\s*-\s*[A-Za-z]+\s+\d+)?)(?!\])/gi;
-    
-    text = text.replace(plainTextPattern, (fullMatch, dateText, offset) => {
-      console.log('Found plain text flight mention:', fullMatch);
-      
-      // Double-check: make sure this isn't already part of a markdown link
-      const beforeChar = offset > 0 ? text.charAt(offset - 1) : '';
-      const afterText = text.substring(offset + fullMatch.length, offset + fullMatch.length + 2);
-      
-      if (beforeChar === '[' || afterText.startsWith('](')) {
-        console.log('Skipping - already wrapped in markdown');
-        return fullMatch;
-      }
-      
-      // Extract dates from the matched text
-      const datePattern = /([A-Za-z]+)\s+(\d+)(?:\s*-\s*([A-Za-z]+)\s+(\d+))?/;
-      const dateMatch = dateText.match(datePattern);
-      
-      if (dateMatch) {
-        const currentYear = new Date().getFullYear();
-        const [_, month1, day1, month2, day2] = dateMatch;
-        
-        const depDate = new Date(`${month1} ${day1}, ${currentYear}`);
-        let returnDate = null;
-        
-        if (month2 && day2) {
-          returnDate = new Date(`${month2} ${day2}, ${currentYear}`);
-        }
-        
-        if (!isNaN(depDate.getTime())) {
-          const departureISO = depDate.toISOString().split('T')[0];
-          const returnISO = returnDate && !isNaN(returnDate.getTime()) 
-            ? returnDate.toISOString().split('T')[0] 
-            : null;
-          
-          const originSlug = formatKiwiLocation(context.origin);
-          const destSlug = formatKiwiLocation(context.destination);
-          
-          // Kiwi.com format: ?origin=montreal-quebec-canada&destination=berlin-germany&outboundDate=2026-02-05&inboundDate=2026-02-12
-          let url = `https://www.kiwi.com/en/?origin=${originSlug}&destination=${destSlug}&outboundDate=${departureISO}`;
-          
-          // Handle return date based on trip type
-          if (context.tripType === 'oneway') {
-            url += `&inboundDate=no-return`;
-          } else if (returnISO) {
-            url += `&inboundDate=${returnISO}`;
-          }
-          
-          // Add cabin class (only if not economy/null)
-          if (context.cabinClass && context.cabinClass !== 'ECONOMY') {
-            url += `&cabinClass=${context.cabinClass}-false`;
-          }
-          
-          // Add passenger counts (only if not default of 1 adult)
-          if (context.adults && context.adults !== 1) {
-            url += `&adults=${context.adults}`;
-          } else if (context.adults === 1 && (context.children > 0 || context.infants > 0)) {
-            url += `&adults=1`;
-          }
-          
-          if (context.children && context.children > 0) {
-            url += `&children=${context.children}`;
-          }
-          
-          if (context.infants && context.infants > 0) {
-            url += `&infants=${context.infants}`;
-          }
-          
-          console.log('✓ Generated URL:', url);
-          return `[Search flights for ${dateText.trim()}](${url})`;
-        }
-      }
-      
-      console.log('✗ Could not parse dates from:', dateText);
-      return fullMatch;
-    });
-  } else {
-    console.log('⚠ Cannot post-process: missing origin or destination');
-    console.log('Origin:', context.origin, 'Destination:', context.destination);
-  }
   
   // Replace generic activity link
   if (context.destination) {
@@ -591,10 +337,6 @@ function processBookingLinks(text: string, context: any): string {
   } else {
     text = text.replace(/ACTIVITY_LINK/g, `https://www.getyourguide.com/?partner_id=${gygId}`);
   }
-  
-  console.log('=== FINAL PROCESSED TEXT ===');
-  console.log(text);
-  console.log('============================');
   
   return text;
 }

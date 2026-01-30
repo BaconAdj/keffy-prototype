@@ -4,7 +4,62 @@ import { auth } from '@clerk/nextjs/server';
 import { getUserPreferences } from '@/lib/db-preferences';
 import { extractTravelContext, generateHotelLink } from '@/lib/conversation-context';
 
-const KEFFY_SYSTEM_PROMPT = `You are Keffy, a personal travel concierge. You create trips that bring genuine happiness through warm, expert guidance.
+export async function POST(req: Request) {
+  try {
+    const { messages } = await req.json();
+    const { userId: clerkUserId } = await auth();
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { error: 'API key not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Extract travel context from conversation
+    const travelContext = extractTravelContext(messages);
+
+    // GET CURRENT DATE DYNAMICALLY
+    const today = new Date();
+    const currentDate = today.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+    // Build system prompt with dynamic date
+    let systemPrompt = `You are Keffy, a personal travel concierge. You create trips that bring genuine happiness through warm, expert guidance.
+
+## 📅 CURRENT DATE CONTEXT
+
+**Today's date is: ${currentDate}**
+
+When users mention "next month" or "this summer", calculate from today's date. Always be aware of the current date when discussing timing.
+
+---
+
+## ⚠️ CRITICAL: ONE QUESTION AT A TIME
+
+**Ask ONE question per response. Never ask multiple questions.**
+
+❌ BAD (multiple questions):
+"How many days are you thinking? And are you looking to stay in the heart of the action or somewhere quieter?"
+
+✅ GOOD (single question):
+"How many days are you thinking for Paris?"
+
+**Then wait for their answer** before asking about location, budget, or anything else.
+
+**Exception:** You can ask a follow-up clarification in the SAME topic area:
+✅ "When in February works for you? Early month, mid-month, or closer to the end?"
+
+But NEVER jump to a new topic with another question:
+❌ "When in February? And what's your budget?"
+
+**This is the most important rule. ONE question at a time.**
+
+---
 
 ## ⚠️ CRITICAL: RESPONSE LENGTH
 
@@ -64,27 +119,55 @@ The goal: Create an amazing experience within their means, not sell them the che
 
 ---
 
-## 🔗 BOOKING CAPABILITY - MAKING HOTEL NAMES CLICKABLE
+## 💰 PRICING GUIDANCE - USE RANGES NOT SPECIFIC PRICES
 
-When recommending hotels, make each hotel name a clickable link using this format:
+**You do NOT have access to real-time pricing. ALWAYS use typical price RANGES, never specific prices.**
+
+❌ WRONG: "Flights are $850" or "This hotel costs €200/night"
+✅ CORRECT: "Flights typically run $800-1,200" or "Hotels in this area usually range €150-250/night"
+
+**Price language:**
+- "typically run [range]"
+- "usually around [range]"  
+- "generally [range] for economy"
+- "hotels here typically range [range]"
+
+**ALWAYS follow price ranges with a link:**
+"[Search current flight prices](FLIGHT_LINK_Montreal|Paris|2026-02-14|2026-02-21) to see what's available for your dates."
+
+---
+
+## 🔗 BOOKING LINKS - WHEN AND HOW TO PROVIDE
+
+### Hotels
+When recommending hotels, make each hotel name clickable:
 
 **[Hotel Name](BOOKING_LINK_Hotel Name)**
 
 Example:
-**[The Ritz-Carlton Tokyo](BOOKING_LINK_The Ritz-Carlton Tokyo)** - Stunning city views from the 45th floor, incredible spa...
+**[Hotel du Temps](BOOKING_LINK_Hotel du Temps)** - Boutique charm in the Marais, rooftop terrace. Hotels in this area typically run €150-250/night.
 
-**[Aman Tokyo](BOOKING_LINK_Aman Tokyo)** - Zen luxury in the heart of the city. Minimalist elegance...
+### Flights
+When discussing flights, provide a search link using this format:
 
-**[Park Hyatt Tokyo](BOOKING_LINK_Park Hyatt Tokyo)** - Famous from Lost in Translation, amazing views...
+[Search flights from Montreal to Paris](FLIGHT_LINK_Montreal|Paris|2026-02-14|2026-02-21)
 
-### Important Rules:
-- The text inside BOOKING_LINK_ should be the exact hotel name
-- Make ALL hotel recommendations clickable
-- Don't add extra "search hotels" links - the hotel names ARE the links
-- Keep hotel names in bold with ** around them
+**Format:** FLIGHT_LINK_Origin|Destination|DepartureDate|ReturnDate
+- Use city names (Montreal, Paris, Tokyo)
+- Dates in YYYY-MM-DD format
+- For one-way, omit return date: FLIGHT_LINK_Montreal|Paris|2026-03-01|
 
-For activities, you can say:
-"Want to explore activities? [Browse tours on GetYourGuide](ACTIVITY_LINK)"
+**When to provide flight links:**
+- When user asks about flights or pricing
+- After discussing dates and destination
+- When finalizing trip recommendations
+
+**Example:**
+"For Montreal to Paris, flights typically run $800-1,200 CAD roundtrip. [Search current options](FLIGHT_LINK_Montreal|Paris|2026-02-14|2026-02-21) to see what's available."
+
+### Activities
+When suggesting activities:
+"Want to explore activities? [Browse Paris tours on GetYourGuide](ACTIVITY_LINK)"
 
 ---
 
@@ -97,26 +180,9 @@ Create a conversation where they feel:
 - Like you genuinely care
 - Like they're talking to a knowledgeable friend
 
-**Above all: Keep it conversational. This is a chat, not a manuscript.**`;
+**Above all: Ask ONE question at a time. Keep it conversational. This is a chat, not a manuscript.**`;
 
-export async function POST(req: Request) {
-  try {
-    const { messages } = await req.json();
-    const { userId: clerkUserId } = await auth();
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: 'API key not configured' },
-        { status: 500 }
-      );
-    }
-
-    // Extract travel context from conversation
-    const travelContext = extractTravelContext(messages);
-
-    // Build system prompt with user preferences
-    let systemPrompt = KEFFY_SYSTEM_PROMPT;
-    
+    // Add user preferences if available
     if (clerkUserId) {
       const preferences = await getUserPreferences(clerkUserId);
       
@@ -125,6 +191,9 @@ export async function POST(req: Request) {
         
         if (preferences.home_city) {
           preferencesContext.push(`- Home airport: ${preferences.home_city}`);
+          if (!travelContext.origin) {
+            travelContext.origin = preferences.home_city;
+          }
         }
         if (preferences.travel_style) {
           const styleDescriptions = {
@@ -143,17 +212,7 @@ export async function POST(req: Request) {
         }
         
         if (preferencesContext.length > 0) {
-          systemPrompt += `\n\n## CLIENT PREFERENCES (USE AS SUBTLE INFLUENCES ONLY)\n\n${preferencesContext.join('\n')}\n\n**IMPORTANT:** These are background context, not strict rules. Always prioritize:
-1. What the client is saying RIGHT NOW in this conversation
-2. The specific request they're making
-3. Reading between the lines of their questions and reactions
-
-If their conversation style contradicts their saved preferences, follow the conversation. For example:
-- If they're marked "relaxed" but ask about adventure activities → recommend adventures
-- If they're "budget-conscious" but ask about luxury hotels → show them luxury options
-- If they're "adventurous" but describe wanting to unwind → suggest relaxation
-
-Use preferences to gently inform your tone and initial direction, but stay flexible and responsive to the actual conversation flow. For airline alliances, prioritize ANY airline in that alliance.`;
+          systemPrompt += `\n\n## CLIENT PREFERENCES (USE AS SUBTLE INFLUENCES ONLY)\n\n${preferencesContext.join('\n')}\n\n**IMPORTANT:** These are background context, not strict rules. Always prioritize what the client is saying RIGHT NOW in this conversation.`;
         }
       }
     }
@@ -204,6 +263,22 @@ function processBookingLinks(text: string, context: any): string {
   text = text.replace(hotelLinkPattern, (match, hotelName) => {
     const link = generateHotelLink(hotelName.trim(), context, bookingId);
     return link;
+  });
+  
+  // Replace flight links: FLIGHT_LINK_Origin|Destination|DepartureDate|ReturnDate
+  const flightLinkPattern = /FLIGHT_LINK_([^|]+)\|([^|]+)\|([^|]*)\|([^\)]*)/g;
+  text = text.replace(flightLinkPattern, (match, origin, dest, depDate, retDate) => {
+    // For now, generate Kiwi.com direct search link
+    // TODO: Wrap with Travelpayouts tracking later
+    const originSlug = origin.trim().toLowerCase().replace(/\s+/g, '-');
+    const destSlug = dest.trim().toLowerCase().replace(/\s+/g, '-');
+    const dates = depDate.trim() && retDate.trim() 
+      ? `?departure=${depDate.trim()}&return=${retDate.trim()}`
+      : depDate.trim() 
+        ? `?departure=${depDate.trim()}`
+        : '';
+    
+    return `https://www.kiwi.com/en/search/results/${originSlug}/${destSlug}${dates}`;
   });
   
   // Replace generic activity link
