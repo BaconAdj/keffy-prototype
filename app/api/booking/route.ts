@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     // ==== BOOKING AGENT PROMPT (Focused) ====
     
-    const bookingPrompt = `You're handling a booking for Keffy. The user confirmed their itinerary and is ready to book.
+    let bookingPrompt = `You're handling a booking for Keffy. The user confirmed their itinerary and is ready to book.
 
 **Confirmed Trip:**
 - Destination: ${travelContext.destination || 'Unknown'}
