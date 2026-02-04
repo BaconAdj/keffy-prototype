@@ -45,13 +45,13 @@ export async function POST(req: Request) {
           if (preferences.dietary_restrictions && preferences.dietary_restrictions.length > 0) {
             const dietary = typeof preferences.dietary_restrictions === 'string' 
               ? preferences.dietary_restrictions 
-              : preferences.dietary_restrictions.join(', ');
+              : (preferences.dietary_restrictions as string[]).join(', ');
             preferencesContext.push(`- Dietary restrictions: ${dietary}`);
           }
           if (preferences.preferred_airlines && preferences.preferred_airlines.length > 0) {
             const airlines = typeof preferences.preferred_airlines === 'string'
               ? preferences.preferred_airlines
-              : preferences.preferred_airlines.join(', ');
+              : (preferences.preferred_airlines as string[]).join(', ');
             preferencesContext.push(`- Preferred airlines: ${airlines}`);
           }
         }
