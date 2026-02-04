@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { parseTravelLink } from '@/lib/link-parser';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -12,14 +11,21 @@ type Message = {
 };
 
 function parseMarkdownLinks(text: string): React.ReactNode[] {
+  // Debug: log the raw text to see what we're parsing
+  console.log('Parsing text:', text);
+  
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   
-  // Regex to match markdown links: [text](url)
+  // More robust regex that handles URLs with special characters
   const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
   let match;
+  let matchCount = 0;
   
   while ((match = linkRegex.exec(text)) !== null) {
+    matchCount++;
+    console.log(`Found link ${matchCount}:`, match[1], '→', match[2]);
+    
     // Add text before the link
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
@@ -28,28 +34,11 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
     const linkText = match[1];
     const url = match[2];
     
-    // Check if this is a travel link placeholder and convert to actual URL
-    let actualUrl = url;
-    if (url.startsWith('FLIGHT_LINK_') || 
-        url.startsWith('BOOKING_LINK_') || 
-        url.startsWith('KLOOK_LINK_') ||
-        url.startsWith('TIQETS_LINK_') ||
-        url.startsWith('CAR_RENTAL_LINK_') ||
-        url.startsWith('TRANSFER_LINK_') ||
-        url.startsWith('INSURANCE_LINK_') ||
-        url.startsWith('AIRHELP_LINK')) {
-      
-      const parsed = parseTravelLink(url);
-      if (parsed) {
-        actualUrl = parsed.url;
-      }
-    }
-    
-    // Create the clickable link with actual URL
+    // Create the clickable link
     parts.push(
       <a
         key={match.index}
-        href={actualUrl}
+        href={url}
         target="_blank"
         rel="noopener noreferrer"
         className="text-gold underline hover:text-[#b89451] font-semibold break-words"
@@ -60,6 +49,8 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
     
     lastIndex = match.index + match[0].length;
   }
+  
+  console.log(`Total links found: ${matchCount}`);
   
   // Add any remaining text after the last link
   if (lastIndex < text.length) {
@@ -234,7 +225,10 @@ export default function ChatPage() {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50 p-5">
         <div className="w-full max-w-[400px] bg-sand rounded-[40px] shadow-2xl p-8 text-center">
-          <div className="font-vibes text-gold text-4xl mb-4">Keffy</div>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="font-vibes text-gold text-4xl">Keffy</div>
+            <span className="bg-navy text-white text-xs font-bold px-2 py-1 rounded-full">EARLY BETA</span>
+          </div>
           <p className="text-navy text-lg mb-6">Your personal travel concierge</p>
           <p className="text-gray-600 mb-8">Sign in to start planning your next adventure</p>
           <SignInButton mode="modal">
@@ -253,7 +247,10 @@ export default function ChatPage() {
         
         <div className="absolute top-0 left-0 right-0 z-10 bg-sand/95 backdrop-blur-sm border-b border-border/30 px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="font-vibes text-gold text-2xl">Keffy</div>
+            <div className="flex items-center gap-2">
+              <div className="font-vibes text-gold text-2xl">Keffy</div>
+              <span className="bg-navy text-white text-[10px] font-bold px-2 py-0.5 rounded-full">BETA</span>
+            </div>
             {currentConversationId && (
               <button
                 onClick={startNewConversation}
@@ -357,12 +354,18 @@ export default function ChatPage() {
             <span className="text-[11px] font-medium">Keffy</span>
           </Link>
           
-          <Link href="/bookings" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 hover:bg-border/30 transition-colors">
+          <button 
+            disabled
+            className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-300 cursor-not-allowed transition-colors"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
-            <span className="text-[11px] font-medium">Bookings</span>
-          </Link>
+            <div className="flex flex-col items-center">
+              <span className="text-[11px] font-medium">Bookings</span>
+              <span className="text-[8px] text-gold font-semibold">Coming Soon</span>
+            </div>
+          </button>
           
           <Link href="/account" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 hover:bg-border/30 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
