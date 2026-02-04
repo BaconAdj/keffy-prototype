@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { parseTravelLink } from '@/lib/link-parser';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -11,46 +12,42 @@ type Message = {
 };
 
 function parseMarkdownLinks(text: string): React.ReactNode[] {
-  // Debug: log the raw text to see what we're parsing
-  console.log('Parsing text:', text);
-  
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   
-  // More robust regex that handles URLs with special characters
+  // Regex to match markdown links
   const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
   let match;
-  let matchCount = 0;
   
   while ((match = linkRegex.exec(text)) !== null) {
-    matchCount++;
-    console.log(`Found link ${matchCount}:`, match[1], '→', match[2]);
-    
     // Add text before the link
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
     }
     
     const linkText = match[1];
-    const url = match[2];
+    const linkUrl = match[2];
+    
+    // Try to parse as travel link first
+    const travelLink = parseTravelLink(linkUrl);
+    const finalUrl = travelLink ? travelLink.url : linkUrl;
+    const finalText = travelLink ? travelLink.text : linkText;
     
     // Create the clickable link
     parts.push(
       <a
         key={match.index}
-        href={url}
+        href={finalUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="text-gold underline hover:text-[#b89451] font-semibold break-words"
       >
-        {linkText}
+        {finalText}
       </a>
     );
     
     lastIndex = match.index + match[0].length;
   }
-  
-  console.log(`Total links found: ${matchCount}`);
   
   // Add any remaining text after the last link
   if (lastIndex < text.length) {
