@@ -43,10 +43,16 @@ export async function POST(req: Request) {
             preferencesContext.push(`- User's home airport: ${preferences.home_city}`);
           }
           if (preferences.dietary_restrictions && preferences.dietary_restrictions.length > 0) {
-            preferencesContext.push(`- Dietary restrictions: ${preferences.dietary_restrictions.join(', ')}`);
+            const dietary = typeof preferences.dietary_restrictions === 'string' 
+              ? preferences.dietary_restrictions 
+              : preferences.dietary_restrictions.join(', ');
+            preferencesContext.push(`- Dietary restrictions: ${dietary}`);
           }
           if (preferences.preferred_airlines && preferences.preferred_airlines.length > 0) {
-            preferencesContext.push(`- Preferred airlines: ${preferences.preferred_airlines.join(', ')}`);
+            const airlines = typeof preferences.preferred_airlines === 'string'
+              ? preferences.preferred_airlines
+              : preferences.preferred_airlines.join(', ');
+            preferencesContext.push(`- Preferred airlines: ${airlines}`);
           }
         }
       } catch (error) {
