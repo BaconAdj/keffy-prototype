@@ -200,11 +200,11 @@ function processBookingLinks(text: string, context: any): string {
   const gygId = process.env.NEXT_PUBLIC_GETYOURGUIDE_PARTNER_ID || 'HXFQEGA';
   
   // Replace hotel-specific links: BOOKING_LINK_Hotel Name
-  const hotelLinkPattern = /BOOKING_LINK_([^\)]+)/g;
-  text = text.replace(hotelLinkPattern, (match, hotelName) => {
-    const link = generateHotelLink(hotelName.trim(), context, bookingId);
-    return link;
-  });
+//   const hotelLinkPattern = /BOOKING_LINK_([^\)]+)/g;
+//   text = text.replace(hotelLinkPattern, (match, hotelName) => {
+//     const link = generateHotelLink(hotelName.trim(), context, bookingId);
+//     return link;
+//   });
   
   // Replace generic activity link
   if (context.destination) {
