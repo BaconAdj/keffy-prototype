@@ -5,7 +5,6 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { extractTravelContext } from '@/lib/conversation-context';
-import { generateDynamicContext } from '@/lib/conversation-helpers';
 import { generateDateContext } from '@/lib/date-calculator';
 import { getUserPreferences } from '@/lib/db-preferences';
 
@@ -27,9 +26,6 @@ export async function POST(req: Request) {
 
     // Extract travel context dynamically
     const travelContext = extractTravelContext(messages);
-
-    // Generate dynamic context based on conversation state
-    const dynamicContext = generateDynamicContext(travelContext);
     
     // Calculate dates from conversation
     const dateContext = generateDateContext(messages);
@@ -438,8 +434,6 @@ If no dates are provided in DATE ASSISTANCE, ask the user for specific dates (YY
 ---
 
 ## DYNAMIC CONTEXT
-
-${dynamicContext}
 
 ${preferencesContext.length > 0 ? `
 **USER PREFERENCES:**
