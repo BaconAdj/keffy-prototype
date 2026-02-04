@@ -445,7 +445,7 @@ ${preferencesContext.length > 0 ? `
 **USER PREFERENCES:**
 ${preferencesContext.join('\n')}
 
-**IMPORTANT:** When asking about flights, if the user has a home airport listed above and they haven't mentioned a specific departure city, use their home airport as the default assumption. You can say something like: "Flying from ${preferences?.home_city || '[home airport]'}?" to confirm. If they mention a different city, use that instead.` : ''}
+**IMPORTANT:** When asking about flights, if the user has a home airport listed above and they haven't mentioned a specific departure city, use their home airport as the default assumption.` : ''}
 
 ---
 
