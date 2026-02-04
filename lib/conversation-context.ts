@@ -200,11 +200,11 @@ export function extractTravelContext(messages: any[]): TravelContext {
   
   if (hasAskedPassengers || hasAskedAges || hasAskedCabin) {
     context.bookingStarted = true;
-  }
-  
-  // Check if flight link was generated
-  if (allText.includes('FLIGHT_LINK_') || allText.includes('Search flights for')) {
-    context.flightLinkGenerated = true;
+//   }
+//   
+//   // Check if flight link was generated
+//   if (allText.includes('FLIGHT_LINK_') || allText.includes('Search flights for')) {
+//     context.flightLinkGenerated = true;
   }
   
   // Check if hotel link was generated
