@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { parseTravelLink } from '@/lib/link-parser';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -11,21 +12,14 @@ type Message = {
 };
 
 function parseMarkdownLinks(text: string): React.ReactNode[] {
-  // Debug: log the raw text to see what we're parsing
-  console.log('Parsing text:', text);
-  
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   
-  // More robust regex that handles URLs with special characters
+  // Regex to match markdown links: [text](url)
   const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
   let match;
-  let matchCount = 0;
   
   while ((match = linkRegex.exec(text)) !== null) {
-    matchCount++;
-    console.log(`Found link ${matchCount}:`, match[1], '→', match[2]);
-    
     // Add text before the link
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
@@ -34,11 +28,28 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
     const linkText = match[1];
     const url = match[2];
     
-    // Create the clickable link
+    // Check if this is a travel link placeholder and convert to actual URL
+    let actualUrl = url;
+    if (url.startsWith('FLIGHT_LINK_') || 
+        url.startsWith('BOOKING_LINK_') || 
+        url.startsWith('KLOOK_LINK_') ||
+        url.startsWith('TIQETS_LINK_') ||
+        url.startsWith('CAR_RENTAL_LINK_') ||
+        url.startsWith('TRANSFER_LINK_') ||
+        url.startsWith('INSURANCE_LINK_') ||
+        url.startsWith('AIRHELP_LINK')) {
+      
+      const parsed = parseTravelLink(url);
+      if (parsed) {
+        actualUrl = parsed.url;
+      }
+    }
+    
+    // Create the clickable link with actual URL
     parts.push(
       <a
         key={match.index}
-        href={url}
+        href={actualUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="text-gold underline hover:text-[#b89451] font-semibold break-words"
@@ -49,8 +60,6 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
     
     lastIndex = match.index + match[0].length;
   }
-  
-  console.log(`Total links found: ${matchCount}`);
   
   // Add any remaining text after the last link
   if (lastIndex < text.length) {
