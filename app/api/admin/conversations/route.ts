@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     }
 
     // Get unique user IDs
-    const userIds = [...new Set(conversations?.map(c => c.user_id) || [])];
+    const userIds = Array.from(new Set(conversations?.map(c => c.user_id) || []));
     console.log('[ADMIN] Fetching details for', userIds.length, 'users');
 
     // Fetch user details from Clerk
