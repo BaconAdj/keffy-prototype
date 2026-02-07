@@ -38,10 +38,11 @@ export async function GET(req: Request) {
 
     // Fetch user details from Clerk
     const userDetailsMap = new Map();
+    const clerk = await clerkClient();
     
     for (const clerkUserId of userIds) {
       try {
-        const user = await clerkClient.users.getUser(clerkUserId);
+        const user = await clerk.users.getUser(clerkUserId);
         userDetailsMap.set(clerkUserId, {
           email: user.emailAddresses[0]?.emailAddress || 'No email',
           firstName: user.firstName || '',
