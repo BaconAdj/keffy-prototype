@@ -1,15 +1,7 @@
 // app/api/admin/conversations/route.ts
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
-
-// Admin check - only allow specific email
-async function isAdmin(userId: string): Promise<boolean> {
-  // You can check against Clerk user metadata or hardcode email
-  // For now, we'll trust the frontend check
-  // In production, verify user email here via Clerk API
-  return true; // Simplified - frontend already checks
-}
 
 export async function GET(req: Request) {
   try {
@@ -19,24 +11,77 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    console.log('[ADMIN] Fetching conversations for user:', userId);
+
     // Create Supabase admin client (bypasses RLS)
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role key for admin access
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Fetch all conversations with message count
+    // Fetch all conversations
     const { data: conversations, error } = await supabase
       .from('conversations')
       .select('*')
       .order('updated_at', { ascending: false });
 
+    console.log('[ADMIN] Found conversations:', conversations?.length || 0);
+
     if (error) {
       console.error('Error fetching conversations:', error);
-      return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to fetch conversations', details: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ conversations });
+    // Get unique user IDs
+    const userIds = [...new Set(conversations?.map(c => c.user_id) || [])];
+    console.log('[ADMIN] Fetching details for', userIds.length, 'users');
+
+    // Fetch user details from Clerk
+    const userDetailsMap = new Map();
+    
+    for (const clerkUserId of userIds) {
+      try {
+        const user = await clerkClient.users.getUser(clerkUserId);
+        userDetailsMap.set(clerkUserId, {
+          email: user.emailAddresses[0]?.emailAddress || 'No email',
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User',
+          imageUrl: user.imageUrl || null,
+          createdAt: user.createdAt,
+        });
+      } catch (err) {
+        console.error(`Failed to fetch user ${clerkUserId}:`, err);
+        userDetailsMap.set(clerkUserId, {
+          email: 'Unknown',
+          firstName: '',
+          lastName: '',
+          fullName: 'Unknown User',
+          imageUrl: null,
+          createdAt: null,
+        });
+      }
+    }
+
+    // Fetch user preferences from Supabase
+    const { data: preferences } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .in('user_id', userIds);
+
+    const preferencesMap = new Map();
+    preferences?.forEach(pref => {
+      preferencesMap.set(pref.user_id, pref);
+    });
+
+    console.log('[ADMIN] User details fetched:', userDetailsMap.size);
+    console.log('[ADMIN] Preferences fetched:', preferencesMap.size);
+
+    return NextResponse.json({ 
+      conversations: conversations || [],
+      userDetails: Object.fromEntries(userDetailsMap),
+      userPreferences: Object.fromEntries(preferencesMap),
+    });
   } catch (error) {
     console.error('Admin API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

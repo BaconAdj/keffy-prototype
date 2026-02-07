@@ -21,10 +21,27 @@ type Message = {
   created_at: string;
 };
 
+type UserDetails = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  imageUrl: string | null;
+  createdAt: number | null;
+};
+
+type UserPreferences = {
+  home_city: string;
+  dietary_restrictions: string;
+  preferred_airlines: string;
+  travel_style: string;
+  budget_range: string;
+};
+
 type UserProfile = {
   userId: string;
-  email: string;
-  name: string;
+  details: UserDetails;
+  preferences: UserPreferences | null;
   conversationCount: number;
   lastActivity: string;
 };
@@ -34,11 +51,13 @@ export default function AdminPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [userDetailsMap, setUserDetailsMap] = useState<Record<string, UserDetails>>({});
+  const [userPreferencesMap, setUserPreferencesMap] = useState<Record<string, UserPreferences>>({});
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [view, setView] = useState<'users' | 'conversations'>('users');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [showDeleted, setShowDeleted] = useState(true);
@@ -62,9 +81,11 @@ export default function AdminPage() {
       const data = await response.json();
       const convs = data.conversations || [];
       setConversations(convs);
+      setUserDetailsMap(data.userDetails || {});
+      setUserPreferencesMap(data.userPreferences || {});
       
       // Build user profiles
-      const profiles = buildUserProfiles(convs);
+      const profiles = buildUserProfiles(convs, data.userDetails || {}, data.userPreferences || {});
       setUserProfiles(profiles);
     } catch (error) {
       console.error('Error loading conversations:', error);
@@ -73,15 +94,26 @@ export default function AdminPage() {
     }
   }
 
-  function buildUserProfiles(convs: Conversation[]): UserProfile[] {
+  function buildUserProfiles(
+    convs: Conversation[], 
+    details: Record<string, UserDetails>,
+    prefs: Record<string, UserPreferences>
+  ): UserProfile[] {
     const userMap = new Map<string, UserProfile>();
     
     convs.forEach(conv => {
       if (!userMap.has(conv.user_id)) {
         userMap.set(conv.user_id, {
           userId: conv.user_id,
-          email: conv.user_id, // Will be replaced by Clerk email if available
-          name: conv.user_id.slice(0, 8),
+          details: details[conv.user_id] || {
+            email: 'Unknown',
+            firstName: '',
+            lastName: '',
+            fullName: 'Unknown User',
+            imageUrl: null,
+            createdAt: null,
+          },
+          preferences: prefs[conv.user_id] || null,
           conversationCount: 0,
           lastActivity: conv.updated_at,
         });
@@ -90,7 +122,6 @@ export default function AdminPage() {
       const profile = userMap.get(conv.user_id)!;
       profile.conversationCount++;
       
-      // Update last activity if this is more recent
       if (new Date(conv.updated_at) > new Date(profile.lastActivity)) {
         profile.lastActivity = conv.updated_at;
       }
@@ -131,22 +162,16 @@ export default function AdminPage() {
 
   const filteredConversations = conversations
     .filter(conv => {
-      // Filter by deleted status
       if (!showDeleted && conv.deleted_by_user) return false;
-      
-      // Filter by selected user
       if (selectedUser && conv.user_id !== selectedUser) return false;
-      
-      // Filter by date
       if (!filterByDate(conv)) return false;
-      
-      // Filter by search term
       if (searchTerm && !conv.title.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
-      
       return true;
     });
+
+  const selectedUserProfile = selectedUser ? userProfiles.find(p => p.userId === selectedUser) : null;
 
   if (!isLoaded || loading) {
     return (
@@ -196,8 +221,7 @@ export default function AdminPage() {
         </div>
 
         {view === 'users' ? (
-          /* User Profile View */
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-4 gap-6">
             {/* Users List */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-navy mb-4">Users</h2>
@@ -215,10 +239,27 @@ export default function AdminPage() {
                         : 'border-gray-200 hover:border-gold hover:bg-gray-50'
                     }`}
                   >
-                    <p className="font-semibold text-navy">{profile.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      ID: {profile.userId.slice(0, 12)}...
-                    </p>
+                    <div className="flex items-center gap-3 mb-2">
+                      {profile.details.imageUrl ? (
+                        <img 
+                          src={profile.details.imageUrl} 
+                          alt={profile.details.fullName}
+                          className="w-10 h-10 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold">
+                          {profile.details.fullName.charAt(0) || '?'}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-navy truncate">
+                          {profile.details.fullName}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {profile.details.email}
+                        </p>
+                      </div>
+                    </div>
                     <p className="text-sm text-gray-600 mt-2">
                       {profile.conversationCount} conversation{profile.conversationCount !== 1 ? 's' : ''}
                     </p>
@@ -230,10 +271,108 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* User Details & Preferences */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold text-navy mb-4">
+                {selectedUserProfile ? 'User Details' : 'Select a user'}
+              </h2>
+              
+              {selectedUserProfile && (
+                <div className="space-y-4">
+                  {/* Profile Info */}
+                  <div className="border-b pb-4">
+                    <div className="flex items-center gap-4 mb-4">
+                      {selectedUserProfile.details.imageUrl ? (
+                        <img 
+                          src={selectedUserProfile.details.imageUrl} 
+                          alt={selectedUserProfile.details.fullName}
+                          className="w-16 h-16 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-navy text-white flex items-center justify-center font-bold text-2xl">
+                          {selectedUserProfile.details.fullName.charAt(0) || '?'}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-lg font-bold text-navy">
+                          {selectedUserProfile.details.fullName}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {selectedUserProfile.details.email}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-600">
+                        <span className="font-semibold">User ID:</span>{' '}
+                        <span className="font-mono text-xs">{selectedUserProfile.userId}</span>
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Conversations:</span>{' '}
+                        {selectedUserProfile.conversationCount}
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Last Active:</span>{' '}
+                        {new Date(selectedUserProfile.lastActivity).toLocaleString()}
+                      </p>
+                      {selectedUserProfile.details.createdAt && (
+                        <p className="text-gray-600">
+                          <span className="font-semibold">Joined:</span>{' '}
+                          {new Date(selectedUserProfile.details.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Preferences */}
+                  <div>
+                    <h4 className="font-bold text-navy mb-3">Travel Preferences</h4>
+                    {selectedUserProfile.preferences ? (
+                      <div className="space-y-2 text-sm">
+                        {selectedUserProfile.preferences.home_city && (
+                          <div className="bg-sand/30 p-3 rounded-lg">
+                            <p className="font-semibold text-navy">Home Airport</p>
+                            <p className="text-gray-700">{selectedUserProfile.preferences.home_city}</p>
+                          </div>
+                        )}
+                        {selectedUserProfile.preferences.travel_style && (
+                          <div className="bg-sand/30 p-3 rounded-lg">
+                            <p className="font-semibold text-navy">Travel Style</p>
+                            <p className="text-gray-700">{selectedUserProfile.preferences.travel_style}</p>
+                          </div>
+                        )}
+                        {selectedUserProfile.preferences.budget_range && (
+                          <div className="bg-sand/30 p-3 rounded-lg">
+                            <p className="font-semibold text-navy">Budget Range</p>
+                            <p className="text-gray-700">{selectedUserProfile.preferences.budget_range}</p>
+                          </div>
+                        )}
+                        {selectedUserProfile.preferences.dietary_restrictions && (
+                          <div className="bg-sand/30 p-3 rounded-lg">
+                            <p className="font-semibold text-navy">Dietary Restrictions</p>
+                            <p className="text-gray-700">{selectedUserProfile.preferences.dietary_restrictions}</p>
+                          </div>
+                        )}
+                        {selectedUserProfile.preferences.preferred_airlines && (
+                          <div className="bg-sand/30 p-3 rounded-lg">
+                            <p className="font-semibold text-navy">Preferred Airlines</p>
+                            <p className="text-gray-700">{selectedUserProfile.preferences.preferred_airlines}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm italic">No preferences set</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* User's Conversations */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-navy mb-4">
-                {selectedUser ? 'User Conversations' : 'Select a user'}
+                {selectedUser ? 'Conversations' : 'Select a user'}
               </h2>
               {selectedUser && (
                 <div className="space-y-2 max-h-[700px] overflow-y-auto">
@@ -250,9 +389,9 @@ export default function AdminPage() {
                         } ${conv.deleted_by_user ? 'opacity-50' : ''}`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <p className="font-semibold text-navy line-clamp-2">{conv.title}</p>
+                          <p className="font-semibold text-navy line-clamp-2 flex-1">{conv.title}</p>
                           {conv.deleted_by_user && (
-                            <span className="text-xs text-red-500 font-bold">DELETED</span>
+                            <span className="text-xs text-red-500 font-bold ml-2">DELETED</span>
                           )}
                         </div>
                         <p className="text-xs text-gray-400">
@@ -272,7 +411,7 @@ export default function AdminPage() {
               <div className="space-y-3 max-h-[700px] overflow-y-auto">
                 {messages.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">
-                    {selectedConv ? 'No messages' : 'Click a conversation to view'}
+                    {selectedConv ? 'No messages' : 'Click a conversation'}
                   </p>
                 ) : (
                   messages.map((msg, idx) => (
@@ -300,16 +439,14 @@ export default function AdminPage() {
             </div>
           </div>
         ) : (
-          /* All Conversations View */
+          /* All Conversations View - same as before */
           <div className="grid grid-cols-2 gap-6">
-            {/* Conversations List with Filters */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-navy mb-4">
                   Conversations ({filteredConversations.length})
                 </h2>
                 
-                {/* Filters */}
                 <div className="space-y-3">
                   <input
                     type="text"
@@ -348,35 +485,37 @@ export default function AdminPage() {
                 {filteredConversations.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No conversations found</p>
                 ) : (
-                  filteredConversations.map((conv) => (
-                    <div
-                      key={conv.id}
-                      onClick={() => loadMessages(conv.id)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedConv === conv.id
-                          ? 'border-gold bg-sand/30'
-                          : 'border-gray-200 hover:border-gold hover:bg-gray-50'
-                      } ${conv.deleted_by_user ? 'opacity-50' : ''}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-navy line-clamp-2">{conv.title}</p>
-                        {conv.deleted_by_user && (
-                          <span className="text-xs text-red-500 font-bold">DELETED</span>
-                        )}
+                  filteredConversations.map((conv) => {
+                    const userDetails = userDetailsMap[conv.user_id];
+                    return (
+                      <div
+                        key={conv.id}
+                        onClick={() => loadMessages(conv.id)}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          selectedConv === conv.id
+                            ? 'border-gold bg-sand/30'
+                            : 'border-gray-200 hover:border-gold hover:bg-gray-50'
+                        } ${conv.deleted_by_user ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-navy line-clamp-2 flex-1">{conv.title}</p>
+                          {conv.deleted_by_user && (
+                            <span className="text-xs text-red-500 font-bold ml-2">DELETED</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {userDetails?.fullName || 'Unknown'} ({userDetails?.email || 'No email'})
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(conv.updated_at).toLocaleString()}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        User: {conv.user_id.slice(0, 8)}...
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(conv.updated_at).toLocaleString()}
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
 
-            {/* Messages */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-navy mb-4">
                 {selectedConv ? 'Messages' : 'Select a conversation'}
@@ -384,7 +523,7 @@ export default function AdminPage() {
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
                 {messages.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">
-                    {selectedConv ? 'No messages' : 'Click a conversation to view'}
+                    {selectedConv ? 'No messages' : 'Click a conversation'}
                   </p>
                 ) : (
                   messages.map((msg, idx) => (
