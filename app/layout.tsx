@@ -18,29 +18,28 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <ItineraryProvider>
-        <html lang="en">
-          <body>
+      <html lang="en">
+        <body>
+          <ItineraryProvider>
             {children}
-            
-            {/* Travelpayouts Verification Script */}
-            <Script
-              id="travelpayouts-verification"
-              strategy="afterInteractive"
-              dangerouslySetInnerHTML={{
-                __html: `
-                  (function () {
-                      var script = document.createElement("script");
-                      script.async = 1;
-                      script.src = 'https://emrldtp.cc/NDkwODg3.js?t=490887';
-                      document.head.appendChild(script);
-                  })();
-                `
-              }}
-            />
-          </body>
-        </html>
-      </ItineraryProvider>
+          </ItineraryProvider>
+
+          <Script
+            id="travelpayouts-verification"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function () {
+                    var script = document.createElement("script");
+                    script.async = 1;
+                    script.src = 'https://emrldtp.cc/NDkwODg3.js?t=490887';
+                    document.head.appendChild(script);
+                })();
+              `
+            }}
+          />
+        </body>
+      </html>
     </ClerkProvider>
   );
 }

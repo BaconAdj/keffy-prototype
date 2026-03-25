@@ -1,7 +1,7 @@
 // app/api/user/conversations/route.ts
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
+import { getUserConversations } from '@/lib/db-conversations';
 
 export async function GET(req: Request) {
   try {
@@ -11,24 +11,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Create Supabase client  
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    // Fetch user's conversations (excluding deleted ones)
-    const { data: conversations, error } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('deleted_by_user', false) // Only show non-deleted
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching conversations:', error);
-      return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 });
-    }
+    // Use the existing db-conversations helper which queries correctly
+    // using status = 'active' — not deleted_by_user which doesn't exist
+    const conversations = await getUserConversations(userId);
 
     return NextResponse.json({ conversations: conversations || [] });
   } catch (error) {
