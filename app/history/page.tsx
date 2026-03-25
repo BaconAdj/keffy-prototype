@@ -89,7 +89,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 p-5">
-      <div className="w-full max-w-[400px] min-h-[90vh] max-h-[844px] bg-sand rounded-[40px] shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-full max-w-[400px] h-[90vh] max-h-[844px] bg-sand rounded-[40px] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header */}
         <div className="bg-navy px-6 py-8 rounded-t-[40px]">
@@ -165,7 +165,7 @@ export default function HistoryPage() {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="bg-white border-t border-border/30 px-5 py-3 flex justify-around items-center">
+        <div className="px-5 py-2 pb-5 bg-sand/98 backdrop-blur-sm border-t border-border/40 flex justify-around items-center flex-shrink-0">
           <Link href="/" className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-gray-400 hover:bg-border/30 transition-colors">
             <div className="font-vibes text-gold text-2xl">K</div>
             <span className="text-[11px] font-medium">Keffy</span>
