@@ -32,20 +32,24 @@ function parseFlightLink(linkText: string): ParsedLink {
   const params = linkText.replace('FLIGHT_LINK_', '').split('|');
   const [origin, destination, departureDate, returnDate, adults, children, infants, cabinClass] = params;
 
-  // Build the deep link destination URL for Kiwi
-  let kiwiUrl = `https://www.kiwi.com/en/?origin=${origin}&destination=${destination}`;
+  // Build Kiwi URL with Travelpayouts affiliate parameters
+  // These fixed params are tied to your Travelpayouts account (keffy.ai project)
+  const affilid = 'travelpayoutsdeeplink_keffyai.com_d5850e0eced8477d93fd773aa-697863';
+  const sub1 = 'd5850e0eced8477d93fd773aa-697863';
+  const deeplinkId = '28960750235';
 
-  if (departureDate) kiwiUrl += `&outboundDate=${departureDate}`;
-  if (returnDate) kiwiUrl += `&inboundDate=${returnDate}`;
-  if (adults) kiwiUrl += `&adults=${adults}`;
-  if (children && parseInt(children) > 0) kiwiUrl += `&children=${children}`;
-  if (infants && parseInt(infants) > 0) kiwiUrl += `&infants=${infants}`;
-  if (cabinClass && cabinClass !== 'ECONOMY') kiwiUrl += `&cabinClass=${cabinClass}-false`;
+  const outboundDate = departureDate || '';
+  const inboundDate = returnDate || 'no-return';
 
-  // Route through Travelpayouts affiliate link
-  // The cookie fires on click, then redirects to the pre-filled Kiwi search
-  const affiliateBase = 'https://kiwi.tpo.lu/CgVUZv1w';
-  const url = `${affiliateBase}?url=${encodeURIComponent(kiwiUrl)}`;
+  let url = `https://www.kiwi.com/us/?origin=${origin}&destination=${destination}`;
+  url += `&outboundDate=${outboundDate}`;
+  url += `&inboundDate=${inboundDate}`;
+  url += `&lang=us`;
+  if (adults) url += `&adults=${adults}`;
+  if (children && parseInt(children) > 0) url += `&children=${children}`;
+  if (infants && parseInt(infants) > 0) url += `&infants=${infants}`;
+  if (cabinClass && cabinClass !== 'ECONOMY') url += `&cabinClass=${cabinClass}-false`;
+  url += `&affilid=${affilid}&sub1=${sub1}&deeplinkId=${deeplinkId}`;
 
   const originCity = origin.split('-')[0];
   const destCity = destination.split('-')[0];
